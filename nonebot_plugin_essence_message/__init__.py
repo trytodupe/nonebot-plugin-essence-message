@@ -387,23 +387,25 @@ async def fetchall_cmd(event: GroupMessageEvent, bot: Bot):
             savecount = 0
             for essence in essencelist:
                 msg = {"message": essence["content"]}
-                savecount += int(
-                    await SaveMsg(
-                        db,
-                        msg,
-                        bot,
-                        event.time,
-                        event.group_id,
-                        essence["sender_id"],
-                        essence["operator_id"],
-                    ).add_to_dataset()
-                )
-        except Exception as e:
+                try:
+                    savecount += int(
+                        await SaveMsg(
+                            db,
+                            msg,
+                            bot,
+                            event.time,
+                            event.group_id,
+                            essence["sender_id"],
+                            essence["operator_id"],
+                        ).add_to_dataset()
+                    )
+                except Exception as e:
+                    # 可以记录日志或打印错误
+                    # print(f"保存精华消息失败: {e}")
+                    continue
+        finally:
             async with ban_lock:
                 fetchall_running.remove(event.group_id)
-            await essence_cmd.finish(f"fetchall过程中出错{e}")
-        async with ban_lock:
-            fetchall_running.remove(event.group_id)
         await essence_cmd.finish(
             f"成功保存 {savecount}/{len(essencelist)} 条精华消息"
         )
